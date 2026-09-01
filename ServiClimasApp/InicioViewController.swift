@@ -195,9 +195,19 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
-        let serviciosVC = NuestrosServiciosViewController()
-        serviciosVC.modalPresentationStyle = .fullScreen
-        present(serviciosVC, animated: true, completion: nil)
+        // Recuperamos los datos guardados en el registro
+        let correoGuardado = UserDefaults.standard.string(forKey: "usuarioCorreo") ?? ""
+        let contraseñaGuardada = UserDefaults.standard.string(forKey: "usuarioContrasena") ?? ""
+
+        // Verificamos si coinciden exactamente
+        if correo == correoGuardado && contraseña == contraseñaGuardada {
+            let serviciosVC = NuestrosServiciosViewController()
+            serviciosVC.modalPresentationStyle = .fullScreen
+            present(serviciosVC, animated: true, completion: nil)
+        } else {
+            // Si te equivocas de correo o contraseña, manda esta alerta
+            mostrarAlerta(titulo: "Datos incorrectos", mensaje: "El correo o la contraseña son incorrectos. Verifica tus datos.")
+        }
     }
 
     @objc private func irARegistro() {

@@ -41,24 +41,20 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
     }
 
     private func configurarElementos() {
-        // LOGO
         logoImageView.contentMode = .scaleAspectFit
         logoImageView.clipsToBounds = false
 
-        // TÍTULO
         tituloLabel.text = "Crear cuenta"
         tituloLabel.font = UIFont(name: "AvenirNext-Bold", size: 30) ?? .boldSystemFont(ofSize: 30)
         tituloLabel.textAlignment = .center
         tituloLabel.textColor = .label
 
-        // DESCRIPCIÓN
         descripcionLabel.text = "Regístrate para utilizar los servicios de Servi Climas"
         descripcionLabel.font = .systemFont(ofSize: 15, weight: .regular)
         descripcionLabel.textAlignment = .center
         descripcionLabel.textColor = .secondaryLabel
         descripcionLabel.numberOfLines = 0
 
-        // CAMPOS Y DELEGADOS
         configurarCampo(campo: nombreTextField, placeholder: "Nombre completo", tipo: .default)
         configurarCampo(campo: telefonoTextField, placeholder: "Teléfono", tipo: .phonePad)
         configurarCampo(campo: correoTextField, placeholder: "Correo electrónico", tipo: .emailAddress)
@@ -71,13 +67,11 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
         contraseñaTextField.delegate = self
         confirmarContraseñaTextField.delegate = self
 
-        // CONTRASEÑAS
         contraseñaTextField.isSecureTextEntry = true
         confirmarContraseñaTextField.isSecureTextEntry = true
         contraseñaTextField.textContentType = .newPassword
         confirmarContraseñaTextField.textContentType = .newPassword
 
-        // BOTÓN CREAR CUENTA
         crearCuentaButton.setTitle("Crear cuenta", for: .normal)
         crearCuentaButton.setTitleColor(.white, for: .normal)
         crearCuentaButton.backgroundColor = .systemBlue
@@ -85,13 +79,11 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
         crearCuentaButton.layer.cornerRadius = 15
         crearCuentaButton.addTarget(self, action: #selector(crearCuentaAccion), for: .touchUpInside)
 
-        // BOTÓN REGRESAR
         regresarButton.setTitle("Ya tengo una cuenta", for: .normal)
         regresarButton.setTitleColor(.systemBlue, for: .normal)
         regresarButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
         regresarButton.addTarget(self, action: #selector(regresarLogin), for: .touchUpInside)
 
-        // SCROLL
         view.addSubview(scrollView)
         scrollView.addSubview(contenidoView)
 
@@ -261,18 +253,23 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
-        // 📌 GUARDAR DATOS LOCALMENTE PARA EL LOGIN
+        // Guardamos los datos para que el InicioViewController los pueda validar
         UserDefaults.standard.set(correo, forKey: "usuarioCorreo")
         UserDefaults.standard.set(contraseña, forKey: "usuarioContrasena")
 
-        // Aquí se manda directo a la pantalla de verificación
         let verificacionVC = VerificacionViewController()
         verificacionVC.modalPresentationStyle = .fullScreen
         present(verificacionVC, animated: true, completion: nil)
     }
 
     @objc private func regresarLogin() {
-        dismiss(animated: true)
+        if let navigationVC = self.navigationController {
+            navigationVC.popViewController(animated: true)
+        } else {
+            let inicioVC = InicioViewController()
+            inicioVC.modalPresentationStyle = .fullScreen
+            present(inicioVC, animated: true, completion: nil)
+        }
     }
 
     private func mostrarAlerta(titulo: String, mensaje: String) {
