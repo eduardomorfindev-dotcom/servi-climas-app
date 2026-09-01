@@ -95,7 +95,7 @@ class NuestrosServiciosViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contenidoView)
 
-        let subviews = [
+        let subviews: [UIView] = [
             regresarButton,
             tituloLabel,
             servicioRequeridoLabel,
@@ -155,7 +155,7 @@ class NuestrosServiciosViewController: UIViewController {
     }
 
     private func configurarLayout() {
-        let elementos = [
+        let elementos: [UIView] = [
             scrollView,
             contenidoView,
             regresarButton,
@@ -238,25 +238,21 @@ class NuestrosServiciosViewController: UIViewController {
     }
 
     @objc private func instalacionAccion() {
-        mostrarAlertaServicio(nombre: "Instalación")
+        let pantalla = InstalacionViewController()
+        pantalla.modalPresentationStyle = .fullScreen
+        present(pantalla, animated: true)
     }
 
     @objc private func reparacionAccion() {
-        mostrarAlertaServicio(nombre: "Reparación")
+        let pantalla = ReparacionViewController()
+        pantalla.modalPresentationStyle = .fullScreen
+        present(pantalla, animated: true)
     }
 
     @objc private func compraAccion() {
-        mostrarAlertaServicio(nombre: "Compra de aire acondicionado nuevo")
-    }
-
-    private func mostrarAlertaServicio(nombre: String) {
-        let alerta = UIAlertController(
-            title: "Servicio seleccionado",
-            message: "Has seleccionado: \(nombre)",
-            preferredStyle: .alert
-        )
-        alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
-        present(alerta, animated: true)
+        let pantalla = CompraAireViewController()
+        pantalla.modalPresentationStyle = .fullScreen
+        present(pantalla, animated: true)
     }
 
     @objc private func cerrarSesionAccion() {
