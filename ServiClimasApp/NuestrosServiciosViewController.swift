@@ -6,6 +6,7 @@ class NuestrosServiciosViewController: UIViewController {
     let contenidoView = UIView()
 
     let regresarButton = UIButton(type: .system)
+    let saludoLabel = UILabel()
     let tituloLabel = UILabel()
     let servicioRequeridoLabel = UILabel()
 
@@ -37,6 +38,11 @@ class NuestrosServiciosViewController: UIViewController {
         regresarButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
         regresarButton.tintColor = .systemBlue
         regresarButton.addTarget(self, action: #selector(regresarAccion), for: .touchUpInside)
+
+        saludoLabel.text = "Hola, \(SesionManager.nombreUsuarioActual) 👋"
+        saludoLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        saludoLabel.textColor = .secondaryLabel
+        saludoLabel.textAlignment = .left
 
         tituloLabel.text = "Nuestros Servicios"
         tituloLabel.font = UIFont.systemFont(ofSize: 30, weight: .bold)
@@ -97,6 +103,7 @@ class NuestrosServiciosViewController: UIViewController {
 
         let subviews: [UIView] = [
             regresarButton,
+            saludoLabel,
             tituloLabel,
             servicioRequeridoLabel,
             mantenimientoButton,
@@ -159,6 +166,7 @@ class NuestrosServiciosViewController: UIViewController {
             scrollView,
             contenidoView,
             regresarButton,
+            saludoLabel,
             tituloLabel,
             servicioRequeridoLabel,
             mantenimientoButton,
@@ -187,7 +195,11 @@ class NuestrosServiciosViewController: UIViewController {
             regresarButton.topAnchor.constraint(equalTo: contenidoView.topAnchor, constant: 16),
             regresarButton.leadingAnchor.constraint(equalTo: contenidoView.leadingAnchor, constant: 24),
 
-            tituloLabel.topAnchor.constraint(equalTo: regresarButton.bottomAnchor, constant: 16),
+            saludoLabel.topAnchor.constraint(equalTo: regresarButton.bottomAnchor, constant: 16),
+            saludoLabel.leadingAnchor.constraint(equalTo: contenidoView.leadingAnchor, constant: 24),
+            saludoLabel.trailingAnchor.constraint(equalTo: contenidoView.trailingAnchor, constant: -24),
+
+            tituloLabel.topAnchor.constraint(equalTo: saludoLabel.bottomAnchor, constant: 4),
             tituloLabel.leadingAnchor.constraint(equalTo: contenidoView.leadingAnchor, constant: 24),
             tituloLabel.trailingAnchor.constraint(equalTo: contenidoView.trailingAnchor, constant: -24),
 
@@ -232,31 +244,23 @@ class NuestrosServiciosViewController: UIViewController {
     }
 
     @objc private func mantenimientoAccion() {
-        let pantalla = MantenimientoViewController()
-        pantalla.modalPresentationStyle = .fullScreen
-        present(pantalla, animated: true)
+        navigationController?.pushViewController(MantenimientoViewController(), animated: true)
     }
 
     @objc private func instalacionAccion() {
-        let pantalla = InstalacionViewController()
-        pantalla.modalPresentationStyle = .fullScreen
-        present(pantalla, animated: true)
+        navigationController?.pushViewController(InstalacionViewController(), animated: true)
     }
 
     @objc private func reparacionAccion() {
-        let pantalla = ReparacionViewController()
-        pantalla.modalPresentationStyle = .fullScreen
-        present(pantalla, animated: true)
+        navigationController?.pushViewController(ReparacionViewController(), animated: true)
     }
 
     @objc private func compraAccion() {
-        let pantalla = CompraAireViewController()
-        pantalla.modalPresentationStyle = .fullScreen
-        present(pantalla, animated: true)
+        navigationController?.pushViewController(CompraAireViewController(), animated: true)
     }
 
     @objc private func cerrarSesionAccion() {
-        self.view.window?.rootViewController = RegistroViewController()
-        self.view.window?.makeKeyAndVisible()
+        SesionManager.cerrarSesion()
+        navigationController?.popToRootViewController(animated: true)
     }
 }

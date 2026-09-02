@@ -9,15 +9,28 @@ class VerificacionViewController: UIViewController, UITextFieldDelegate {
     let subtituloLabel = UILabel()
     let codigoTextField = UITextField()
     let verificarButton = UIButton(type: .system)
+    let reenviarButton = UIButton(type: .system)
     let regresarButton = UIButton(type: .system)
-    
+
     var correoUsuario: String = ""
+
+    /// Código "enviado" al correo. Como no hay backend de correo real,
+    /// se genera aquí mismo y se muestra en una alerta para poder probarlo.
+    private var codigoGenerado: String = ""
+
+    private var segundosParaReenviar = 0
+    private var temporizadorReenvio: Timer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         configurarPantalla()
         configurarElementos()
         configurarLayout()
+        generarYEnviarCodigo(mostrarAlerta: true)
+    }
+
+    deinit {
+        temporizadorReenvio?.invalidate()
     }
 
     private func configurarPantalla() {
@@ -56,6 +69,11 @@ class VerificacionViewController: UIViewController, UITextFieldDelegate {
         verificarButton.layer.cornerRadius = 15
         verificarButton.addTarget(self, action: #selector(verificarAccion), for: .touchUpInside)
 
+        reenviarButton.setTitleColor(.systemBlue, for: .normal)
+        reenviarButton.setTitleColor(.tertiaryLabel, for: .disabled)
+        reenviarButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        reenviarButton.addTarget(self, action: #selector(reenviarAccion), for: .touchUpInside)
+
         regresarButton.setTitle("Regresar", for: .normal)
         regresarButton.setTitleColor(.systemBlue, for: .normal)
         regresarButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
@@ -64,12 +82,12 @@ class VerificacionViewController: UIViewController, UITextFieldDelegate {
         view.addSubview(scrollView)
         scrollView.addSubview(contenidoView)
 
-        let subviews = [tituloLabel, subtituloLabel, codigoTextField, verificarButton, regresarButton]
+        let subviews = [tituloLabel, subtituloLabel, codigoTextField, verificarButton, reenviarButton, regresarButton]
         subviews.forEach { contenidoView.addSubview($0) }
     }
 
     private func configurarLayout() {
-        let elementos = [scrollView, contenidoView, tituloLabel, subtituloLabel, codigoTextField, verificarButton, regresarButton]
+        let elementos = [scrollView, contenidoView, tituloLabel, subtituloLabel, codigoTextField, verificarButton, reenviarButton, regresarButton]
         elementos.forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
 
         NSLayoutConstraint.activate([
@@ -102,7 +120,10 @@ class VerificacionViewController: UIViewController, UITextFieldDelegate {
             verificarButton.trailingAnchor.constraint(equalTo: codigoTextField.trailingAnchor),
             verificarButton.heightAnchor.constraint(equalToConstant: 52),
 
-            regresarButton.topAnchor.constraint(equalTo: verificarButton.bottomAnchor, constant: 15),
+            reenviarButton.topAnchor.constraint(equalTo: verificarButton.bottomAnchor, constant: 18),
+            reenviarButton.centerXAnchor.constraint(equalTo: contenidoView.centerXAnchor),
+
+            regresarButton.topAnchor.constraint(equalTo: reenviarButton.bottomAnchor, constant: 12),
             regresarButton.centerXAnchor.constraint(equalTo: contenidoView.centerXAnchor),
             regresarButton.bottomAnchor.constraint(equalTo: contenidoView.bottomAnchor, constant: -30)
         ])
@@ -121,17 +142,71 @@ class VerificacionViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
+        if codigo != codigoGenerado {
+            mostrarAlerta(titulo: "Código incorrecto", mensaje: "El código no coincide. Verifica el que enviamos a tu correo.")
+            codigoTextField.becomeFirstResponder()
+            return
+        }
+
         let alerta = UIAlertController(title: "¡Cuenta verificada!", message: "¡Bienvenido! Gracias por tu preferencia.", preferredStyle: .alert)
         alerta.addAction(UIAlertAction(title: "Aceptar", style: .default) { [weak self] _ in
-            let serviciosVC = NuestrosServiciosViewController()
-            serviciosVC.modalPresentationStyle = .fullScreen
-            self?.present(serviciosVC, animated: true, completion: nil)
+            guard let self else { return }
+            self.navigationController?.pushViewController(NuestrosServiciosViewController(), animated: true)
         })
         present(alerta, animated: true)
     }
 
+    @objc private func reenviarAccion() {
+        guard segundosParaReenviar == 0 else { return }
+        generarYEnviarCodigo(mostrarAlerta: true)
+    }
+
     @objc private func regresarAccion() {
-        dismiss(animated: true, completion: nil)
+        navigationController?.popViewController(animated: true)
+    }
+
+    // MARK: - Código simulado
+
+    private func generarYEnviarCodigo(mostrarAlerta: Bool) {
+        codigoGenerado = String(format: "%06d", Int.random(in: 0...999999))
+        codigoTextField.text = ""
+        iniciarCuentaRegresivaReenvio()
+
+        if mostrarAlerta {
+            let alerta = UIAlertController(
+                title: "Código enviado",
+                message: "Como esta es una app de demostración, tu código de verificación es:\n\n\(codigoGenerado)",
+                preferredStyle: .alert
+            )
+            alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
+            present(alerta, animated: true)
+        }
+    }
+
+    private func iniciarCuentaRegresivaReenvio() {
+        temporizadorReenvio?.invalidate()
+        segundosParaReenviar = 30
+        actualizarTituloReenviar()
+
+        temporizadorReenvio = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] temporizador in
+            guard let self else { return }
+            self.segundosParaReenviar -= 1
+            if self.segundosParaReenviar <= 0 {
+                self.segundosParaReenviar = 0
+                temporizador.invalidate()
+            }
+            self.actualizarTituloReenviar()
+        }
+    }
+
+    private func actualizarTituloReenviar() {
+        if segundosParaReenviar > 0 {
+            reenviarButton.setTitle("Reenviar código (\(segundosParaReenviar)s)", for: .normal)
+            reenviarButton.isEnabled = false
+        } else {
+            reenviarButton.setTitle("Reenviar código", for: .normal)
+            reenviarButton.isEnabled = true
+        }
     }
 
     private func mostrarAlerta(titulo: String, mensaje: String) {

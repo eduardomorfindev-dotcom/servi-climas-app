@@ -67,10 +67,10 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
         contraseñaTextField.delegate = self
         confirmarContraseñaTextField.delegate = self
 
-        contraseñaTextField.isSecureTextEntry = true
-        confirmarContraseñaTextField.isSecureTextEntry = true
         contraseñaTextField.textContentType = .newPassword
         confirmarContraseñaTextField.textContentType = .newPassword
+        contraseñaTextField.agregarBotonOjito()
+        confirmarContraseñaTextField.agregarBotonOjito()
 
         crearCuentaButton.setTitle("Crear cuenta", for: .normal)
         crearCuentaButton.setTitleColor(.white, for: .normal)
@@ -241,8 +241,20 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
+        if !esCorreoValido(correo) {
+            mostrarAlerta(titulo: "Correo inválido", mensaje: "Ingresa un correo electrónico con un formato válido.")
+            correoTextField.becomeFirstResponder()
+            return
+        }
+
         if contraseña.isEmpty {
             mostrarAlerta(titulo: "Contraseña requerida", mensaje: "Ingresa una contraseña.")
+            contraseñaTextField.becomeFirstResponder()
+            return
+        }
+
+        if contraseña.count < 6 {
+            mostrarAlerta(titulo: "Contraseña muy corta", mensaje: "La contraseña debe tener al menos 6 caracteres.")
             contraseñaTextField.becomeFirstResponder()
             return
         }
@@ -253,23 +265,30 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
-        // Guardamos los datos para que el InicioViewController los pueda validar
-        UserDefaults.standard.set(correo, forKey: "usuarioCorreo")
-        UserDefaults.standard.set(contraseña, forKey: "usuarioContrasena")
+        crearCuentaButton.isEnabled = false
 
-        let verificacionVC = VerificacionViewController()
-        verificacionVC.modalPresentationStyle = .fullScreen
-        present(verificacionVC, animated: true, completion: nil)
+        SesionManager.registrar(nombre: nombre, correo: correo, contrasena: contraseña) { [weak self] resultado in
+            guard let self else { return }
+            self.crearCuentaButton.isEnabled = true
+
+            switch resultado {
+            case .success:
+                let verificacionVC = VerificacionViewController()
+                verificacionVC.correoUsuario = correo
+                self.navigationController?.pushViewController(verificacionVC, animated: true)
+            case .failure(let error):
+                self.mostrarAlerta(titulo: "No se pudo crear la cuenta", mensaje: SesionManager.mensajeError(error))
+            }
+        }
+    }
+
+    private func esCorreoValido(_ correo: String) -> Bool {
+        let patron = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        return NSPredicate(format: "SELF MATCHES %@", patron).evaluate(with: correo)
     }
 
     @objc private func regresarLogin() {
-        if let navigationVC = self.navigationController {
-            navigationVC.popViewController(animated: true)
-        } else {
-            let inicioVC = InicioViewController()
-            inicioVC.modalPresentationStyle = .fullScreen
-            present(inicioVC, animated: true, completion: nil)
-        }
+        navigationController?.popViewController(animated: true)
     }
 
     private func mostrarAlerta(titulo: String, mensaje: String) {

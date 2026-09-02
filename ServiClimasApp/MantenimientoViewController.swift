@@ -5,6 +5,7 @@ class MantenimientoViewController: UIViewController {
     let scrollView = UIScrollView()
     let contenidoView = UIView()
 
+    let regresarButton = UIButton(type: .system)
     let tituloLabel = UILabel()
     let descripcionLabel = UILabel()
 
@@ -19,6 +20,10 @@ class MantenimientoViewController: UIViewController {
     let preventivoButton = UIButton(type: .system)
     let correctivoButton = UIButton(type: .system)
 
+    let pagoLabel = UILabel()
+    let transferenciaButton = UIButton(type: .system)
+    let efectivoButton = UIButton(type: .system)
+
     let fechaLabel = UILabel()
     let fechaPicker = UIDatePicker()
 
@@ -32,6 +37,7 @@ class MantenimientoViewController: UIViewController {
 
     var equipoSeleccionado = "No seleccionado"
     var mantenimientoSeleccionado = "No seleccionado"
+    var metodoPagoSeleccionado: MetodoPago?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,14 +48,7 @@ class MantenimientoViewController: UIViewController {
 
     private func configurarPantalla() {
         view.backgroundColor = .systemGroupedBackground
-
-        let botonRegresar = UIButton(type: .system)
-        botonRegresar.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        botonRegresar.tintColor = .label
-        botonRegresar.addTarget(self, action: #selector(regresarAccion), for: .touchUpInside)
-        
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: botonRegresar)
-        navigationItem.title = "Mantenimiento"
+        navigationItem.title = ""
 
         scrollView.backgroundColor = .clear
         scrollView.showsVerticalScrollIndicator = true
@@ -59,6 +58,13 @@ class MantenimientoViewController: UIViewController {
     }
 
     private func configurarElementos() {
+        regresarButton.setTitle("Regresar", for: .normal)
+        regresarButton.setTitleColor(.systemBlue, for: .normal)
+        regresarButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        regresarButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        regresarButton.tintColor = .systemBlue
+        regresarButton.addTarget(self, action: #selector(regresarAccion), for: .touchUpInside)
+
         tituloLabel.text = "Solicitar mantenimiento"
         tituloLabel.font = UIFont.systemFont(ofSize: 30, weight: .bold)
         tituloLabel.textColor = .label
@@ -99,6 +105,14 @@ class MantenimientoViewController: UIViewController {
 
         preventivoButton.addTarget(self, action: #selector(seleccionarMantenimiento), for: .touchUpInside)
         correctivoButton.addTarget(self, action: #selector(seleccionarMantenimiento), for: .touchUpInside)
+
+        pagoLabel.text = "¿Cómo prefieres pagar?"
+        configurarLabel(pagoLabel)
+
+        configurarBoton(transferenciaButton, titulo: "Transferencia", icono: "creditcard.fill")
+        configurarBoton(efectivoButton, titulo: "Efectivo", icono: "banknote.fill")
+        transferenciaButton.addTarget(self, action: #selector(seleccionarMetodoPago), for: .touchUpInside)
+        efectivoButton.addTarget(self, action: #selector(seleccionarMetodoPago), for: .touchUpInside)
 
         fechaLabel.text = "¿Qué día agendamos su servicio?"
         configurarLabel(fechaLabel)
@@ -148,9 +162,10 @@ class MantenimientoViewController: UIViewController {
         scrollView.addSubview(contenidoView)
 
         let elementos = [
-            tituloLabel, descripcionLabel, tipoEquipoLabel,
+            regresarButton, tituloLabel, descripcionLabel, tipoEquipoLabel,
             convencionalButton, inverterButton, otroEquipoButton,
             mantenimientoLabel, preventivoButton, correctivoButton,
+            pagoLabel, transferenciaButton, efectivoButton,
             fechaLabel, fechaPicker, horarioLabel, horarioPicker,
             comentarioLabel, comentarioTextView, continuarButton
         ]
@@ -188,9 +203,10 @@ class MantenimientoViewController: UIViewController {
 
     private func configurarLayout() {
         let elementos = [
-            scrollView, contenidoView, tituloLabel, descripcionLabel,
+            scrollView, contenidoView, regresarButton, tituloLabel, descripcionLabel,
             tipoEquipoLabel, convencionalButton, inverterButton, otroEquipoButton,
             mantenimientoLabel, preventivoButton, correctivoButton,
+            pagoLabel, transferenciaButton, efectivoButton,
             fechaLabel, fechaPicker, horarioLabel, horarioPicker,
             comentarioLabel, comentarioTextView, continuarButton
         ]
@@ -209,7 +225,10 @@ class MantenimientoViewController: UIViewController {
             contenidoView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
             contenidoView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
 
-            tituloLabel.topAnchor.constraint(equalTo: contenidoView.topAnchor, constant: 30),
+            regresarButton.topAnchor.constraint(equalTo: contenidoView.topAnchor, constant: 16),
+            regresarButton.leadingAnchor.constraint(equalTo: contenidoView.leadingAnchor, constant: 24),
+
+            tituloLabel.topAnchor.constraint(equalTo: regresarButton.bottomAnchor, constant: 16),
             tituloLabel.leadingAnchor.constraint(equalTo: contenidoView.leadingAnchor, constant: 24),
             tituloLabel.trailingAnchor.constraint(equalTo: contenidoView.trailingAnchor, constant: -24),
 
@@ -250,7 +269,21 @@ class MantenimientoViewController: UIViewController {
             correctivoButton.trailingAnchor.constraint(equalTo: preventivoButton.trailingAnchor),
             correctivoButton.heightAnchor.constraint(equalToConstant: 82),
 
-            fechaLabel.topAnchor.constraint(equalTo: correctivoButton.bottomAnchor, constant: 30),
+            pagoLabel.topAnchor.constraint(equalTo: correctivoButton.bottomAnchor, constant: 30),
+            pagoLabel.leadingAnchor.constraint(equalTo: tituloLabel.leadingAnchor),
+            pagoLabel.trailingAnchor.constraint(equalTo: tituloLabel.trailingAnchor),
+
+            transferenciaButton.topAnchor.constraint(equalTo: pagoLabel.bottomAnchor, constant: 14),
+            transferenciaButton.leadingAnchor.constraint(equalTo: tituloLabel.leadingAnchor),
+            transferenciaButton.trailingAnchor.constraint(equalTo: tituloLabel.trailingAnchor),
+            transferenciaButton.heightAnchor.constraint(equalToConstant: 60),
+
+            efectivoButton.topAnchor.constraint(equalTo: transferenciaButton.bottomAnchor, constant: 10),
+            efectivoButton.leadingAnchor.constraint(equalTo: tituloLabel.leadingAnchor),
+            efectivoButton.trailingAnchor.constraint(equalTo: tituloLabel.trailingAnchor),
+            efectivoButton.heightAnchor.constraint(equalToConstant: 60),
+
+            fechaLabel.topAnchor.constraint(equalTo: efectivoButton.bottomAnchor, constant: 30),
             fechaLabel.leadingAnchor.constraint(equalTo: tituloLabel.leadingAnchor),
             fechaLabel.trailingAnchor.constraint(equalTo: tituloLabel.trailingAnchor),
 
@@ -325,6 +358,23 @@ class MantenimientoViewController: UIViewController {
         }
     }
 
+    @objc private func seleccionarMetodoPago(_ sender: UIButton) {
+        let botones = [transferenciaButton, efectivoButton]
+        botones.forEach {
+            $0.layer.borderWidth = 1
+            $0.layer.borderColor = UIColor.separator.cgColor
+            $0.configuration?.baseBackgroundColor = .secondarySystemGroupedBackground
+            $0.configuration?.baseForegroundColor = .label
+        }
+
+        sender.layer.borderWidth = 2
+        sender.layer.borderColor = UIColor.systemBlue.cgColor
+        sender.configuration?.baseBackgroundColor = .systemBlue
+        sender.configuration?.baseForegroundColor = .white
+
+        metodoPagoSeleccionado = (sender == transferenciaButton) ? .transferencia : .efectivo
+    }
+
     @objc private func regresarAccion() {
         if let navigationVC = self.navigationController {
             navigationVC.popViewController(animated: true)
@@ -344,31 +394,42 @@ class MantenimientoViewController: UIViewController {
             return
         }
 
-        let formatoFecha = DateFormatter()
-        formatoFecha.locale = Locale(identifier: "es_MX")
-        formatoFecha.dateStyle = .long
-        let fecha = formatoFecha.string(from: fechaPicker.date)
-
-        let formatoHora = DateFormatter()
-        formatoHora.locale = Locale(identifier: "es_MX")
-        formatoHora.timeStyle = .short
-        let hora = formatoHora.string(from: horarioPicker.date)
+        guard let metodoPago = metodoPagoSeleccionado else {
+            mostrarAlerta(titulo: "Falta seleccionar", mensaje: "Selecciona tu método de pago.")
+            return
+        }
 
         var comentario = comentarioTextView.text ?? ""
         if comentario == "Escribe aquí algún comentario sobre tu equipo o el servicio que necesitas..." {
             comentario = "Sin comentarios adicionales."
         }
 
-        let pantalla = ConfirmarSolicitudViewController(
-            servicio: mantenimientoSeleccionado,
-            equipo: equipoSeleccionado,
-            fecha: fecha,
-            hora: hora,
-            comentario: comentario
+        let solicitud = SolicitudMantenimiento(
+            tipoEquipo: equipoSeleccionado,
+            tipoMantenimiento: mantenimientoSeleccionado,
+            fecha: fechaPicker.date,
+            hora: horarioPicker.date,
+            comentario: comentario,
+            metodoPago: metodoPago
         )
 
-        pantalla.modalPresentationStyle = .fullScreen
-        present(pantalla, animated: true)
+        let formatoFecha = DateFormatter()
+        formatoFecha.locale = Locale(identifier: "es_MX")
+        formatoFecha.dateStyle = .long
+        let fechaTexto = formatoFecha.string(from: solicitud.fecha)
+
+        let pantalla = ConfirmarSolicitudViewController(solicitud: solicitud) {
+            NotificacionesManager.notificarInmediata(
+                titulo: "Solicitud recibida",
+                mensaje: "Tu solicitud de \(solicitud.tipoMantenimiento.lowercased()) fue registrada. Te contactaremos pronto."
+            )
+            NotificacionesManager.notificarInmediata(
+                titulo: "Nueva solicitud de mantenimiento",
+                mensaje: "\(SesionManager.nombreUsuarioActual) solicitó \(solicitud.tipoMantenimiento.lowercased()) para el \(fechaTexto)."
+            )
+        }
+
+        navigationController?.pushViewController(pantalla, animated: true)
     }
 
     private func mostrarAlerta(titulo: String, mensaje: String) {

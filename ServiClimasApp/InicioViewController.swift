@@ -62,8 +62,8 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
         correoTextField.delegate = self
         contraseñaTextField.delegate = self
 
-        contraseñaTextField.isSecureTextEntry = true
         contraseñaTextField.textContentType = .password
+        contraseñaTextField.agregarBotonOjito()
 
         // BOTÓN INICIAR SESIÓN
         iniciarSesionButton.setTitle("Iniciar sesión", for: .normal)
@@ -195,25 +195,24 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
-        // Recuperamos los datos guardados en el registro
-        let correoGuardado = UserDefaults.standard.string(forKey: "usuarioCorreo") ?? ""
-        let contraseñaGuardada = UserDefaults.standard.string(forKey: "usuarioContrasena") ?? ""
+        iniciarSesionButton.isEnabled = false
 
-        // Verificamos si coinciden exactamente
-        if correo == correoGuardado && contraseña == contraseñaGuardada {
-            let serviciosVC = NuestrosServiciosViewController()
-            serviciosVC.modalPresentationStyle = .fullScreen
-            present(serviciosVC, animated: true, completion: nil)
-        } else {
-            // Si te equivocas de correo o contraseña, manda esta alerta
-            mostrarAlerta(titulo: "Datos incorrectos", mensaje: "El correo o la contraseña son incorrectos. Verifica tus datos.")
+        SesionManager.iniciarSesion(correo: correo, contrasena: contraseña) { [weak self] resultado in
+            guard let self else { return }
+            self.iniciarSesionButton.isEnabled = true
+
+            switch resultado {
+            case .success:
+                let serviciosVC = NuestrosServiciosViewController()
+                self.navigationController?.pushViewController(serviciosVC, animated: true)
+            case .failure(let error):
+                self.mostrarAlerta(titulo: "Datos incorrectos", mensaje: SesionManager.mensajeError(error))
+            }
         }
     }
 
     @objc private func irARegistro() {
-        let registroVC = RegistroViewController()
-        registroVC.modalPresentationStyle = .fullScreen
-        present(registroVC, animated: true, completion: nil)
+        navigationController?.pushViewController(RegistroViewController(), animated: true)
     }
 
     private func mostrarAlerta(titulo: String, mensaje: String) {
