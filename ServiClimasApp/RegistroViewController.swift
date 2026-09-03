@@ -235,6 +235,12 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
+        if telefono.filter(\.isNumber).count < 10 {
+            mostrarAlerta(titulo: "Teléfono inválido", mensaje: "Ingresa un número de teléfono a 10 dígitos.")
+            telefonoTextField.becomeFirstResponder()
+            return
+        }
+
         if correo.isEmpty {
             mostrarAlerta(titulo: "Correo requerido", mensaje: "Ingresa tu correo electrónico.")
             correoTextField.becomeFirstResponder()
@@ -273,9 +279,12 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
 
             switch resultado {
             case .success:
-                let verificacionVC = VerificacionViewController()
-                verificacionVC.correoUsuario = correo
-                self.navigationController?.pushViewController(verificacionVC, animated: true)
+                BaseDatosManager.guardarUsuario(nombre: nombre, correo: correo, telefono: telefono)
+                NotificacionesManager.notificarInmediata(
+                    titulo: "¡Bienvenido a Servi Climas!",
+                    mensaje: "Gracias por registrarte, \(nombre). Ya puedes agendar tus servicios."
+                )
+                self.navigationController?.pushViewController(NuestrosServiciosViewController(), animated: true)
             case .failure(let error):
                 self.mostrarAlerta(titulo: "No se pudo crear la cuenta", mensaje: SesionManager.mensajeError(error))
             }
