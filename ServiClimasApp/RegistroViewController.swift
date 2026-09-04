@@ -15,6 +15,7 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
     let nombreTextField = UITextField()
     let telefonoTextField = UITextField()
     let correoTextField = UITextField()
+    let direccionTextField = UITextField()
     let contraseñaTextField = UITextField()
     let confirmarContraseñaTextField = UITextField()
 
@@ -58,12 +59,14 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
         configurarCampo(campo: nombreTextField, placeholder: "Nombre completo", tipo: .default)
         configurarCampo(campo: telefonoTextField, placeholder: "Teléfono", tipo: .phonePad)
         configurarCampo(campo: correoTextField, placeholder: "Correo electrónico", tipo: .emailAddress)
+        configurarCampo(campo: direccionTextField, placeholder: "Dirección en Manzanillo", tipo: .default)
         configurarCampo(campo: contraseñaTextField, placeholder: "Contraseña", tipo: .default)
         configurarCampo(campo: confirmarContraseñaTextField, placeholder: "Confirmar contraseña", tipo: .default)
 
         nombreTextField.delegate = self
         telefonoTextField.delegate = self
         correoTextField.delegate = self
+        direccionTextField.delegate = self
         contraseñaTextField.delegate = self
         confirmarContraseñaTextField.delegate = self
 
@@ -89,7 +92,7 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
 
         let subviews = [
             logoImageView, tituloLabel, descripcionLabel,
-            nombreTextField, telefonoTextField, correoTextField,
+            nombreTextField, telefonoTextField, correoTextField, direccionTextField,
             contraseñaTextField, confirmarContraseñaTextField,
             crearCuentaButton, regresarButton
         ]
@@ -120,7 +123,7 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
         let elementos = [
             scrollView, contenidoView,
             logoImageView, tituloLabel, descripcionLabel,
-            nombreTextField, telefonoTextField, correoTextField,
+            nombreTextField, telefonoTextField, correoTextField, direccionTextField,
             contraseñaTextField, confirmarContraseñaTextField,
             crearCuentaButton, regresarButton
         ]
@@ -167,7 +170,12 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
             correoTextField.trailingAnchor.constraint(equalTo: nombreTextField.trailingAnchor),
             correoTextField.heightAnchor.constraint(equalToConstant: 52),
 
-            contraseñaTextField.topAnchor.constraint(equalTo: correoTextField.bottomAnchor, constant: 12),
+            direccionTextField.topAnchor.constraint(equalTo: correoTextField.bottomAnchor, constant: 12),
+            direccionTextField.leadingAnchor.constraint(equalTo: nombreTextField.leadingAnchor),
+            direccionTextField.trailingAnchor.constraint(equalTo: nombreTextField.trailingAnchor),
+            direccionTextField.heightAnchor.constraint(equalToConstant: 52),
+
+            contraseñaTextField.topAnchor.constraint(equalTo: direccionTextField.bottomAnchor, constant: 12),
             contraseñaTextField.leadingAnchor.constraint(equalTo: nombreTextField.leadingAnchor),
             contraseñaTextField.trailingAnchor.constraint(equalTo: nombreTextField.trailingAnchor),
             contraseñaTextField.heightAnchor.constraint(equalToConstant: 52),
@@ -192,6 +200,7 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
         nombreTextField.returnKeyType = .next
         telefonoTextField.returnKeyType = .next
         correoTextField.returnKeyType = .next
+        direccionTextField.returnKeyType = .next
         contraseñaTextField.returnKeyType = .next
         confirmarContraseñaTextField.returnKeyType = .done
     }
@@ -202,6 +211,8 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
         } else if textField == telefonoTextField {
             correoTextField.becomeFirstResponder()
         } else if textField == correoTextField {
+            direccionTextField.becomeFirstResponder()
+        } else if textField == direccionTextField {
             contraseñaTextField.becomeFirstResponder()
         } else if textField == contraseñaTextField {
             confirmarContraseñaTextField.becomeFirstResponder()
@@ -220,6 +231,7 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
         let nombre = nombreTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let telefono = telefonoTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let correo = correoTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let direccion = direccionTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let contraseña = contraseñaTextField.text ?? ""
         let confirmarContraseña = confirmarContraseñaTextField.text ?? ""
 
@@ -253,6 +265,12 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
             return
         }
 
+        if direccion.isEmpty {
+            mostrarAlerta(titulo: "Dirección requerida", mensaje: "Ingresa tu dirección en Manzanillo.")
+            direccionTextField.becomeFirstResponder()
+            return
+        }
+
         if contraseña.isEmpty {
             mostrarAlerta(titulo: "Contraseña requerida", mensaje: "Ingresa una contraseña.")
             contraseñaTextField.becomeFirstResponder()
@@ -279,12 +297,20 @@ class RegistroViewController: UIViewController, UITextFieldDelegate {
 
             switch resultado {
             case .success:
-                BaseDatosManager.guardarUsuario(nombre: nombre, correo: correo, telefono: telefono)
-                NotificacionesManager.notificarInmediata(
-                    titulo: "¡Bienvenido a Servi Climas!",
-                    mensaje: "Gracias por registrarte, \(nombre). Ya puedes agendar tus servicios."
-                )
-                self.navigationController?.pushViewController(NuestrosServiciosViewController(), animated: true)
+                BaseDatosManager.guardarUsuario(nombre: nombre, correo: correo, telefono: telefono, direccion: direccion)
+
+                SesionManager.enviarVerificacionCorreo { resultadoCorreo in
+                    if case .failure(let error) = resultadoCorreo {
+                        self.mostrarAlerta(
+                            titulo: "No se pudo enviar el correo de verificación",
+                            mensaje: SesionManager.mensajeError(error)
+                        )
+                    }
+                }
+
+                let verificacionVC = VerificacionViewController()
+                verificacionVC.correoUsuario = correo
+                self.navigationController?.pushViewController(verificacionVC, animated: true)
             case .failure(let error):
                 self.mostrarAlerta(titulo: "No se pudo crear la cuenta", mensaje: SesionManager.mensajeError(error))
             }
