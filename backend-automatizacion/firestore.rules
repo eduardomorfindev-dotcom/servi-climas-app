@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para ServiClimasApp.
+//
+// Colecciones que usa la app (ver ServiClimasApp/Models/BaseDatosManager.swift):
+//   - usuarios/{uid}      -> perfil de cada cliente (nombre, correo, teléfono, dirección)
+//   - solicitudes/{id}    -> solicitudes de servicio (mantenimiento, instalación, reparación, compra)
+//
+// "citas_bot" (creada por backend-automatizacion/functions/index.js) no tiene
+// reglas propias a propósito: las Cloud Functions usan el SDK de administrador,
+// que ignora estas reglas, y ningún cliente de la app la usa.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Debe coincidir con AdminConfig.correoAdmin en la app de iOS.
+    function esAdmin() {
+      return request.auth != null && request.auth.token.email == 'eduardo.morfin.dev@gmail.com';
+    }
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    // Cada cliente solo puede leer y escribir su propio perfil.
+    // El admin puede leer cualquier perfil (lo necesita para el panel de administración).
+    match /usuarios/{uid} {
+      allow read: if autenticado() && (request.auth.uid == uid || esAdmin());
+      allow write: if autenticado() && request.auth.uid == uid;
+    }
+
+    // Cada cliente solo puede crear y leer sus propias solicitudes.
+    // El admin puede leer, actualizar (cambiar estado) y borrar cualquier solicitud.
+    match /solicitudes/{solicitudId} {
+      allow create: if autenticado() && request.resource.data.correoUsuario == request.auth.token.email;
+      allow read: if autenticado() && (resource.data.correoUsuario == request.auth.token.email || esAdmin());
+      allow update, delete: if esAdmin();
+    }
+
+    // Todo lo demás queda bloqueado por defecto.
+  }
+}
