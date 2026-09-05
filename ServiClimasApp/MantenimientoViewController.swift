@@ -427,6 +427,13 @@ class MantenimientoViewController: UIViewController {
                 titulo: "Nueva solicitud de mantenimiento",
                 mensaje: "\(SesionManager.nombreUsuarioActual) solicitó \(solicitud.tipoMantenimiento.lowercased()) para el \(fechaTexto)."
             )
+            if let fechaCita = solicitud.fechaCita {
+                NotificacionesManager.notificarUnDiaAntes(
+                    fechaCita: fechaCita,
+                    titulo: "Recordatorio de mantenimiento",
+                    mensaje: "Mañana es tu \(solicitud.tipoMantenimiento.lowercased()). ¡Te esperamos!"
+                )
+            }
         }
 
         navigationController?.pushViewController(pantalla, animated: true)

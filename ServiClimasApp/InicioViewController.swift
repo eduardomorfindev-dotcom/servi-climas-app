@@ -16,6 +16,7 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
     let contraseñaTextField = UITextField()
 
     let iniciarSesionButton = UIButton(type: .system)
+    let olvideContrasenaButton = UIButton(type: .system)
     let registrarseButton = UIButton(type: .system)
 
     override func viewDidLoad() {
@@ -73,6 +74,12 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
         iniciarSesionButton.layer.cornerRadius = 15
         iniciarSesionButton.addTarget(self, action: #selector(iniciarSesionAccion), for: .touchUpInside)
 
+        // BOTÓN OLVIDÉ MI CONTRASEÑA
+        olvideContrasenaButton.setTitle("¿Olvidaste tu contraseña?", for: .normal)
+        olvideContrasenaButton.setTitleColor(.secondaryLabel, for: .normal)
+        olvideContrasenaButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        olvideContrasenaButton.addTarget(self, action: #selector(olvideContrasenaAccion), for: .touchUpInside)
+
         // BOTÓN REGISTRARSE
         registrarseButton.setTitle("¿No tienes cuenta? Regístrate", for: .normal)
         registrarseButton.setTitleColor(.systemBlue, for: .normal)
@@ -86,7 +93,7 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
         let subviews = [
             logoImageView, tituloLabel, descripcionLabel,
             correoTextField, contraseñaTextField,
-            iniciarSesionButton, registrarseButton
+            iniciarSesionButton, olvideContrasenaButton, registrarseButton
         ]
         subviews.forEach { contenidoView.addSubview($0) }
     }
@@ -116,7 +123,7 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
             scrollView, contenidoView,
             logoImageView, tituloLabel, descripcionLabel,
             correoTextField, contraseñaTextField,
-            iniciarSesionButton, registrarseButton
+            iniciarSesionButton, olvideContrasenaButton, registrarseButton
         ]
 
         elementos.forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
@@ -161,7 +168,10 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
             iniciarSesionButton.trailingAnchor.constraint(equalTo: correoTextField.trailingAnchor),
             iniciarSesionButton.heightAnchor.constraint(equalToConstant: 52),
 
-            registrarseButton.topAnchor.constraint(equalTo: iniciarSesionButton.bottomAnchor, constant: 15),
+            olvideContrasenaButton.topAnchor.constraint(equalTo: iniciarSesionButton.bottomAnchor, constant: 14),
+            olvideContrasenaButton.centerXAnchor.constraint(equalTo: contenidoView.centerXAnchor),
+
+            registrarseButton.topAnchor.constraint(equalTo: olvideContrasenaButton.bottomAnchor, constant: 12),
             registrarseButton.centerXAnchor.constraint(equalTo: contenidoView.centerXAnchor),
             registrarseButton.bottomAnchor.constraint(equalTo: contenidoView.bottomAnchor, constant: -30)
         ])
@@ -203,8 +213,15 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
 
             switch resultado {
             case .success:
-                let serviciosVC = NuestrosServiciosViewController()
-                self.navigationController?.pushViewController(serviciosVC, animated: true)
+                SesionManager.recargarUsuario { _ in
+                    if SesionManager.correoVerificado {
+                        self.navigationController?.pushViewController(NuestrosServiciosViewController(), animated: true)
+                    } else {
+                        let verificacionVC = VerificacionViewController()
+                        verificacionVC.correoUsuario = correo
+                        self.navigationController?.pushViewController(verificacionVC, animated: true)
+                    }
+                }
             case .failure(let error):
                 self.mostrarAlerta(titulo: "Datos incorrectos", mensaje: SesionManager.mensajeError(error))
             }
@@ -213,6 +230,12 @@ class InicioViewController: UIViewController, UITextFieldDelegate {
 
     @objc private func irARegistro() {
         navigationController?.pushViewController(RegistroViewController(), animated: true)
+    }
+
+    @objc private func olvideContrasenaAccion() {
+        let recuperarVC = RecuperarContrasenaViewController()
+        recuperarVC.correoInicial = correoTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        navigationController?.pushViewController(recuperarVC, animated: true)
     }
 
     private func mostrarAlerta(titulo: String, mensaje: String) {

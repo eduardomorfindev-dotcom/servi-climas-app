@@ -1,4 +1,5 @@
 import UIKit
+import FirebaseAuth
 
 class NuestrosServiciosViewController: UIViewController {
 
@@ -14,7 +15,11 @@ class NuestrosServiciosViewController: UIViewController {
     let instalacionButton = UIButton(type: .system)
     let reparacionButton = UIButton(type: .system)
     let compraButton = UIButton(type: .system)
+    let misSolicitudesButton = UIButton(type: .system)
+    let adminButton = UIButton(type: .system)
     let cerrarSesionButton = UIButton(type: .system)
+
+    private lazy var esAdmin = AdminConfig.esAdmin(correo: Auth.auth().currentUser?.email)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -90,6 +95,26 @@ class NuestrosServiciosViewController: UIViewController {
         )
         compraButton.addTarget(self, action: #selector(compraAccion), for: .touchUpInside)
 
+        configurarBoton(
+            boton: misSolicitudesButton,
+            titulo: "Mis solicitudes",
+            descripcion: "Consulta el estado de tus citas y servicios",
+            icono: "list.bullet.rectangle.fill",
+            color: .systemTeal
+        )
+        misSolicitudesButton.addTarget(self, action: #selector(misSolicitudesAccion), for: .touchUpInside)
+
+        if esAdmin {
+            configurarBoton(
+                boton: adminButton,
+                titulo: "Panel de Administración",
+                descripcion: "Ver todas las solicitudes de servicio",
+                icono: "list.clipboard.fill",
+                color: .systemGray
+            )
+            adminButton.addTarget(self, action: #selector(adminAccion), for: .touchUpInside)
+        }
+
         cerrarSesionButton.setTitle("Cerrar sesión", for: .normal)
         cerrarSesionButton.setTitleColor(.systemRed, for: .normal)
         cerrarSesionButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
@@ -101,7 +126,7 @@ class NuestrosServiciosViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contenidoView)
 
-        let subviews: [UIView] = [
+        var subviews: [UIView] = [
             regresarButton,
             saludoLabel,
             tituloLabel,
@@ -110,8 +135,13 @@ class NuestrosServiciosViewController: UIViewController {
             instalacionButton,
             reparacionButton,
             compraButton,
+            misSolicitudesButton,
             cerrarSesionButton
         ]
+
+        if esAdmin {
+            subviews.append(adminButton)
+        }
 
         subviews.forEach {
             contenidoView.addSubview($0)
@@ -162,7 +192,7 @@ class NuestrosServiciosViewController: UIViewController {
     }
 
     private func configurarLayout() {
-        let elementos: [UIView] = [
+        var elementos: [UIView] = [
             scrollView,
             contenidoView,
             regresarButton,
@@ -173,8 +203,13 @@ class NuestrosServiciosViewController: UIViewController {
             instalacionButton,
             reparacionButton,
             compraButton,
+            misSolicitudesButton,
             cerrarSesionButton
         ]
+
+        if esAdmin {
+            elementos.append(adminButton)
+        }
 
         elementos.forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -227,7 +262,28 @@ class NuestrosServiciosViewController: UIViewController {
             compraButton.trailingAnchor.constraint(equalTo: mantenimientoButton.trailingAnchor),
             compraButton.heightAnchor.constraint(equalToConstant: 76),
 
-            cerrarSesionButton.topAnchor.constraint(equalTo: compraButton.bottomAnchor, constant: 32),
+            misSolicitudesButton.topAnchor.constraint(equalTo: compraButton.bottomAnchor, constant: 14),
+            misSolicitudesButton.leadingAnchor.constraint(equalTo: mantenimientoButton.leadingAnchor),
+            misSolicitudesButton.trailingAnchor.constraint(equalTo: mantenimientoButton.trailingAnchor),
+            misSolicitudesButton.heightAnchor.constraint(equalToConstant: 76)
+        ])
+
+        if esAdmin {
+            NSLayoutConstraint.activate([
+                adminButton.topAnchor.constraint(equalTo: misSolicitudesButton.bottomAnchor, constant: 14),
+                adminButton.leadingAnchor.constraint(equalTo: mantenimientoButton.leadingAnchor),
+                adminButton.trailingAnchor.constraint(equalTo: mantenimientoButton.trailingAnchor),
+                adminButton.heightAnchor.constraint(equalToConstant: 76),
+
+                cerrarSesionButton.topAnchor.constraint(equalTo: adminButton.bottomAnchor, constant: 32)
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                cerrarSesionButton.topAnchor.constraint(equalTo: misSolicitudesButton.bottomAnchor, constant: 32)
+            ])
+        }
+
+        NSLayoutConstraint.activate([
             cerrarSesionButton.centerXAnchor.constraint(equalTo: contenidoView.centerXAnchor),
             cerrarSesionButton.bottomAnchor.constraint(equalTo: contenidoView.bottomAnchor, constant: -32)
         ])
@@ -257,6 +313,14 @@ class NuestrosServiciosViewController: UIViewController {
 
     @objc private func compraAccion() {
         navigationController?.pushViewController(CompraAireViewController(), animated: true)
+    }
+
+    @objc private func misSolicitudesAccion() {
+        navigationController?.pushViewController(MisSolicitudesViewController(), animated: true)
+    }
+
+    @objc private func adminAccion() {
+        navigationController?.pushViewController(AdminViewController(), animated: true)
     }
 
     @objc private func cerrarSesionAccion() {

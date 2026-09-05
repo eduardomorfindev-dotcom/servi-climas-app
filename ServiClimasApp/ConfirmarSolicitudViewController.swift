@@ -185,9 +185,33 @@ class ConfirmarSolicitudViewController: UIViewController {
     // MARK: - ACCIONES
 
     @objc private func confirmarSolicitud() {
-        alConfirmar()
-        BaseDatosManager.guardarSolicitud(servicio: solicitud.tituloServicio, resumen: solicitud.resumen)
-        navigationController?.pushViewController(ConfirmacionEnviadaViewController(), animated: true)
+        confirmarButton.isEnabled = false
+
+        BaseDatosManager.guardarSolicitud(
+            servicio: solicitud.tituloServicio,
+            resumen: solicitud.resumen,
+            fechaCita: solicitud.fechaCita
+        ) { [weak self] resultado in
+            guard let self else { return }
+            self.confirmarButton.isEnabled = true
+
+            switch resultado {
+            case .success:
+                self.alConfirmar()
+                self.navigationController?.pushViewController(ConfirmacionEnviadaViewController(), animated: true)
+            case .failure(let error):
+                self.mostrarAlerta(
+                    titulo: "No se pudo enviar",
+                    mensaje: BaseDatosManager.mensajeError(error)
+                )
+            }
+        }
+    }
+
+    private func mostrarAlerta(titulo: String, mensaje: String) {
+        let alerta = UIAlertController(title: titulo, message: mensaje, preferredStyle: .alert)
+        alerta.addAction(UIAlertAction(title: "Aceptar", style: .default))
+        present(alerta, animated: true)
     }
 
     @objc private func regresar() {

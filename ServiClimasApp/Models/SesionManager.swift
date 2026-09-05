@@ -46,6 +46,45 @@ enum SesionManager {
         try? Auth.auth().signOut()
     }
 
+    /// Manda el correo real de verificación de Firebase a la cuenta actual.
+    static func enviarVerificacionCorreo(completion: @escaping (Result<Void, Error>) -> Void) {
+        Auth.auth().currentUser?.sendEmailVerification { error in
+            if let error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    /// Refresca los datos de la cuenta actual para saber si ya se confirmó el correo.
+    static func recargarUsuario(completion: @escaping (Result<Void, Error>) -> Void) {
+        Auth.auth().currentUser?.reload { error in
+            if let error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    /// Manda el correo real de recuperación de contraseña de Firebase Auth
+    /// (Auth.auth().sendPasswordReset). Firebase se encarga de generar el
+    /// enlace seguro y de la página donde el usuario define su nueva contraseña.
+    static func enviarRecuperacionContrasena(correo: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        Auth.auth().sendPasswordReset(withEmail: correo) { error in
+            if let error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+
+    static var correoVerificado: Bool {
+        Auth.auth().currentUser?.isEmailVerified ?? false
+    }
+
     static var nombreUsuarioActual: String {
         Auth.auth().currentUser?.displayName ?? "Usuario"
     }
@@ -69,6 +108,8 @@ enum SesionManager {
             return "No existe una cuenta con ese correo."
         case .networkError:
             return "Hubo un problema de conexión a internet. Intenta de nuevo."
+        case .tooManyRequests:
+            return "Hiciste demasiados intentos. Espera unos minutos y vuelve a intentarlo."
         default:
             return "Ocurrió un problema. Intenta de nuevo."
         }
